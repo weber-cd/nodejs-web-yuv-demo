@@ -7,3 +7,6 @@ yarn install
 node src/server
 ```
 then open http://localhost:3000/
+
+#### Display result
+![preview](static/preview.gif)
