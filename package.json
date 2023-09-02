@@ -1,0 +1,14 @@
+{
+  "name": "nodejs-web-yuv-demo",
+  "version": "1.0.0",
+  "description": "This is a demo that reads YUV video data using Node.js and plays it in the frontend using a canvas.",
+  "main": "index.js",
+  "repository": "https://github.com/weber-cd/nodejs-web-yuv-demo.git",
+  "author": "weber.cd@foxmail.com",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "fluent-ffmpeg": "^2.1.2",
+    "ws": "^8.13.0"
+  }
+}
