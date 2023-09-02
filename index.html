@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas Color Fill</title>
+</head>
+<body>
+  <canvas id="myCanvas" width="640" height="360"></canvas>
+
+  <script>
+    const width = 640;
+    const height = 360;
+    const canvas = document.getElementById("myCanvas");
+    const context = canvas.getContext("2d");
+  
+    // Create a WebSocket connection
+    const socket = new WebSocket("ws://localhost:3000"); // Replace with your WebSocket address based on your server configuration
+    
+    // Handle WebSocket connection event
+    socket.addEventListener("open", (event) => {
+      console.log("WebSocket connected");
+    });
+    
+    // Handle messages received from the server
+    socket.addEventListener("message", async (event) => {
+      // Parse data sent from the WebSocket message
+      const blob = event.data;
+      const yuvFrameData = await blob.arrayBuffer();
+      const yuvFrameDataFormat = new Uint8Array(yuvFrameData)
+      drawYUVYFrame(yuvFrameDataFormat, context)
+    });
+
+    // Handle WebSocket close event
+    socket.addEventListener("close", (event) => {
+      console.log("WebSocket closed");
+    });
+
+  function drawYUVYFrame(yuvFrameData, context) {
+    if (!context) return;
+    
+    const imageData = context.createImageData(width, height);
+    const data = imageData.data;
+    
+    let pixelIndex = 0;
+    const yCounts = width * height;
+    
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x += 4) {
+        const yIndex0 = y * width + x;
+        const yIndex1 = yIndex0 + 1;
+        const yIndex2 = yIndex0 + 2;
+        const yIndex3 = yIndex0 + 3;
+        const uIndex01 = yCounts + (yIndex0 / 2);
+        const uIndex23 = yCounts + (yIndex2 / 2);
+
+        const vIndex01 = yCounts + (yCounts / 2) + (yIndex0 / 2);
+        const vIndex23 = yCounts + (yCounts / 2) + (yIndex2 / 2);
+
+        const y0 = yuvFrameData[yIndex0];
+        const y1 = yuvFrameData[yIndex1];
+        const u01 = yuvFrameData[uIndex01];
+        const v01 = yuvFrameData[vIndex01];
+
+        const y2 = yuvFrameData[yIndex2];
+        const y3 = yuvFrameData[yIndex3];
+        const u23 = yuvFrameData[uIndex23];
+        const v23 = yuvFrameData[vIndex23];
+
+        const rgb0 = yuv422ToRGB(y0, u01, v01);
+        const rgb1 = yuv422ToRGB(y1, u01, v01);
+        const rgb2 = yuv422ToRGB(y2, u23, v23);
+        const rgb3 = yuv422ToRGB(y3, u23, v23);
+
+        data[pixelIndex++] = rgb0.r;
+        data[pixelIndex++] = rgb0.g;
+        data[pixelIndex++] = rgb0.b;
+        data[pixelIndex++] = 255;
+
+        data[pixelIndex++] = rgb1.r;
+        data[pixelIndex++] = rgb1.g;
+        data[pixelIndex++] = rgb1.b;
+        data[pixelIndex++] = 255;
+
+        data[pixelIndex++] = rgb2.r;
+        data[pixelIndex++] = rgb2.g;
+        data[pixelIndex++] = rgb2.b;
+        data[pixelIndex++] = 255;
+
+        data[pixelIndex++] = rgb3.r;
+        data[pixelIndex++] = rgb3.g;
+        data[pixelIndex++] = rgb3.b;
+        data[pixelIndex++] = 255;
+      }
+    }
+    context.clearRect(0, 0, width, height);
+    context.putImageData(imageData, 0, 0);
+  }
+
+  function yuv422ToRGB(y,u,v){
+    r=Math.min(255, Math.max(0, Math.floor(y+1.4075*(v-128))))
+    g=Math.min(255, Math.max(0, Math.floor(y-0.3455*(u-128)-(0.7169*(v-128)))));
+    b=Math.min(255, Math.max(0, Math.floor(y+1.7790*(u-128))));
+    return({r:r,g:g,b:b});
+  }
+
+  </script>
+</body>
+</html>
